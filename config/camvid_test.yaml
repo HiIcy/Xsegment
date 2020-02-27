@@ -1,0 +1,29 @@
+model_name: pspnet
+dataset_name: camvid
+batch_size: 2
+power: 0.9
+lr: 0.01
+numclass: 12
+model_param: {
+      numclass: 12
+}
+test_data_path: /data/soft/javad/COCO/camvid/test
+test_annot_path: /data/soft/javad/COCO/camvid/testannot
+pool_core:
+  - 1
+  - 2
+  - 3
+  - 6
+gpus: [0,1]
+print_freq: 20
+log_dir: /data/soft/javad/COCO/camvid/logs
+save_path: /data/soft/javad/Xsegment/model/pspnet_2020_02_27_state_dict.pth
+img_size:
+  - 360
+  - 480
+result_path: /data/soft/javad/Xsegment/result
+ori_size:
+  - 360
+  - 480
+base_size: 1024
+scales: [1.0]

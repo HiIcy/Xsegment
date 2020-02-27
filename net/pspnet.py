@@ -8,7 +8,7 @@ from torchvision.models import resnet101
 import torch.nn.functional as F
 import torch.nn as nn
 from utils.init import init_weight
-
+import net.resnet as models
 
 class PyramidPoolModule(nn.Module):
     def __init__(self, scales, in_dim, reduction_dim):
@@ -27,12 +27,12 @@ class PyramidPoolModule(nn.Module):
         input_size = input.size()
         r = [input]
         for x in self.pools:
-            r.append(F.upsample(x(input), input_size[2:], mode="bilinear", align_corners=True))  # align_corners 对齐左上角
+            r.append(F.interpolate(x(input), input_size[2:], mode="bilinear", align_corners=True)) # align_corners 对齐左上角
         return torch.cat(r, dim=1)
 
 
 class pspnet(nn.Module):
-    def __init__(self,numclass,pretrained=True,use_aux=True):
+    def __init__(self,numclass,pretrained=True,dropout=0.1,use_aux=True):
         super(pspnet,self).__init__()
         self.use_aux = use_aux
         self.numclass = numclass
@@ -61,19 +61,26 @@ class pspnet(nn.Module):
                 m.dilation,m.padding,m.stride = (4,4),(4,4),(1,1)
             elif 'downsample.0' in n:
                 m.stride = (1,1)
-        # 2048 是残差的两个1024加起来
+        # 2048:是残差的两个1024加起来
         self.ppm = PyramidPoolModule([1,2,3,6],2048,512)
         # FAQ:这里如何把图片恢复的
         self.fcn = nn.Sequential(
             # 特征图尺寸不变
+            # 4096:是原特征图2048+ppm的2048
             nn.Conv2d(4096,512,kernel_size=3,padding=1),
             nn.BatchNorm2d(512),
             nn.ReLU(True),
-            nn.Dropout(0.5),
+            nn.Dropout2d(dropout),
             nn.Conv2d(512,numclass,kernel_size=1)
         )
         if self.use_aux:
-            self.aux_logits = nn.Conv2d(1024,numclass,kernel_size=1)
+            self.aux_logits = nn.Sequential(
+                nn.Conv2d(1024, 256, kernel_size=3, padding=1, bias=False),
+                nn.BatchNorm2d(256),
+                nn.ReLU(inplace=True),
+                nn.Dropout2d(dropout),
+                nn.Conv2d(256, numclass, kernel_size=1)
+            )
             init_weight(self.aux_logits)
         init_weight(self.ppm,self.fcn)
 
@@ -91,6 +98,11 @@ class pspnet(nn.Module):
             aux_x = self.aux_logits(x)
             # FAQ:在这里恢复尺寸，能达到效果?
             # FIXME:F.upsample_bilinear() 待试用?
-            return (F.upsample(mas_x,x_size[2:],mode="bilinear"),
-                    F.upsample(aux_x,x_size[2:],mode="bilinear"))
-        return F.upsample(mas_x,x_size[2:],mode="bilinear")
+            return (F.interpolate(mas_x,x_size[2:],mode="bilinear",align_corners=True),
+                    F.interpolate(aux_x,x_size[2:],mode="bilinear",align_corners=True))
+        return F.interpolate(mas_x,x_size[2:],mode="bilinear",align_corners=True)
+
+
+if __name__ == '__main__':
+    import os
+    

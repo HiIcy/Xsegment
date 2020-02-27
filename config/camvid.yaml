@@ -1,17 +1,17 @@
 model_name: pspnet
 dataset_name: camvid
-train_data_path: F:\Resources\dataset\SegNet-Tutorial-master\CamVid\train
-train_annot_path: F:\Resources\dataset\SegNet-Tutorial-master\CamVid\trainannot
-val_data_path: F:\Resources\dataset\SegNet-Tutorial-master\CamVid\val
-val_annot_path: F:\Resources\dataset\SegNet-Tutorial-master\CamVid\valannot
+train_data_path: /data/soft/javad/COCO/camvid/train
+train_annot_path: /data/soft/javad/COCO/camvid/trainannot
+val_data_path: /data/soft/javad/COCO/camvid/val
+val_annot_path: /data/soft/javad/COCO/camvid/valannot
 
-batch_size: 2
+batch_size: 32
 optimizer_param: {
       lr: 0.01,
       momentum: 0.9,
       weight_decay: 0.0001
 }
-iter: 5000
+iter: 600
 power: 0.9
 lr: 0.01
 numclass: 12
@@ -24,11 +24,11 @@ pool_core:
   - 3
   - 6
 aux_weight: 0.4
-gpus: []
-print_freq: 20
+gpus: [0,1,2,3]
+print_freq: 3
 save_freq: 30
-log_dir: E:\deeper\Xsegment\logs
-save_path: E:\deeper\Xsegment\model\
+log_dir: /data/soft/javad/Xsegment/logs
+save_path: /data/soft/javad/Xsegment/model
 img_size:
-  - 400
+  - 360
   - 480

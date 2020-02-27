@@ -1,5 +1,9 @@
 # coding:utf-8
 # __author__ = deepSea
+# __time__ = 2020/1/21
+# __file__ = test
+# __desc__ = # coding:utf-8
+# __author__ = deepSea
 # __time__ = 2020/1/15
 # __file__ = train
 # __desc__ =
@@ -11,20 +15,18 @@ warnings.filterwarnings("ignore")
 parent_dir = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(parent_dir)
 from utils.options import parse_arg
-from torch.optim import SGD
 import torch.nn as nn
 import torch
 
 if __name__ == "__main__":
     #torch.multiprocessing.freeze_support()
 
-    from operate.reader import Processer
+    from operate.evaler import Evaler
     args = parse_arg()
     crition = nn.CrossEntropyLoss(ignore_index=255)
-    optimzer = SGD
 
-    processer = Processer(args,crition,optimzer)
+    processer = Evaler(args,crition)
 
-    processer.train()
+    processer.test(visual=True)
 
-    print("train done!")
+    print("test done!")

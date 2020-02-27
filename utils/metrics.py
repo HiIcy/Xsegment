@@ -59,14 +59,14 @@ class Metrics:
 
     def pixelAccuracy(self):
         # acc = (TP + TN) / (TP + TN + FP + TN)
-        molecule = np.diag(self.confusionMatrix) #提取对角线 TP
+        molecule = np.diag(self.confusionMatrix)  # 提取对角线 TP
         molecule = np.sum(molecule)
         denominator = np.sum(self.confusionMatrix)
-        return molecule / (denominator+1e-6)
+        return molecule / denominator
 
     def classPixelAccuracy(self):
         # pi = TP / TP + FP
-        PIs = np.sum(self.confusionMatrix,axis=1)
+        PIs = np.sum(self.confusionMatrix, axis=1)
         molecule = np.diag(self.confusionMatrix)
         return molecule / PIs
 
@@ -77,8 +77,8 @@ class Metrics:
 
     def meanIntersectionOverUnion(self):
         intersection = np.diag(self.confusionMatrix)
-        FP = np.sum(self.confusionMatrix,axis=1)
-        FN = np.sum(self.confusionMatrix,axis=0)
+        FP = np.sum(self.confusionMatrix, axis=1)
+        FN = np.sum(self.confusionMatrix, axis=0)
         union = FP + FN - intersection
         oiou = intersection / union
         meaniou = np.nanmean(oiou)
@@ -88,22 +88,43 @@ class Metrics:
         # 背景也算上
         mask = ((0 <= label) & (label < self.numclass))
         # REW: 计算所有类的混淆矩阵
-        board = self.numclass*label[mask]+pred[mask]
+        board = self.numclass * label[mask] + pred[mask]
         board = board.astype("int")
-        board = np.bincount(board,minlength=self.numclass**2)
-        confusionMatrix = board.reshape((self.numclass,self.numclass))
+        board = np.bincount(board, minlength=self.numclass ** 2)
+        confusionMatrix = board.reshape((self.numclass, self.numclass))
         return confusionMatrix
 
-    def addBatch(self,imgpred,imglabel):
+    def addBatch(self, imgpred, imglabel):
         assert imgpred.shape == imglabel.shape
-        self.confusionMatrix += self.genConfusionMatrix(imgpred,imglabel)
+        self.confusionMatrix += self.genConfusionMatrix(imgpred, imglabel)
 
     def reset(self):
         self.confusionMatrix = np.zeros((self.numclass, self.numclass))
 
-    def loadData(self,bpred,blabel):
+    def loadData(self, bpred, blabel):
+        # print(f"bpred's shape: {bpred.shape}")
+        # print(f"blabel's shape: {blabel.shape}")
         assert bpred.shape == blabel.shape
         N = bpred.shape[0]
         for i in range(N):
-            self.addBatch(bpred[i],blabel[i])
+            self.addBatch(bpred[i], blabel[i])
 
+
+
+# 这个工具不错
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
